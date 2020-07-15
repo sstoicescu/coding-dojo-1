@@ -1,30 +1,44 @@
 Spring Boot Coding Dojo
 ---
 
-Welcome to the Spring Boot Coding Dojo!
-
 ### Introduction
 
-This is a simple application that requests its data from [OpenWeather](https://openweathermap.org/) and stores the result in a database. The current implementation has quite a few problems making it a non-production ready product.
+This is a simple weather forwarder part of the coding dojo from https://github.com/marcosbarbero/coding-dojo-spring-boot
 
-### The task
+### Decisions
 
-As the new engineer leading this project, your first task is to make it production-grade, feel free to refactor any piece
-necessary to achieve the goal.
+## Implemented functionality:
 
-### How to deliver the code
+- Break down functionality into separate services (Data layer, weather API layer)
+- Several types of integration and end to end tests
+- Support multiple environments
+- The application verifies its OpenWeather configuration is correct before declaring itself as ready to receive requests.
+- There is a primitive rate limiter.
 
-Please send an email containing your solution with a link to a public repository.
+## Discussion around production readyness
+ The dojo doesn't specify all the information required for full production readiness; more specifically, the target usage and the environment in which the application would be deployed.
+ If it's a public service, we should have some form of authentication/authorization.
+ Rate limiting is an issue; not just configuration-wise (suppose we have a Developer account and an Enterprise one) but also in terms of distribution: running instances on multiple machines. A workaround is to configure the API endpoint to a rate-limiter proxy.
+ Secrets handling depends on the deployment strategy. At best, we want Spring Cloud Config or Spring Vault (and encrypting the API key at rest). The current implementation receives the values via the environment.
 
->**DO NOT create a Pull Request with your solution** 
 
-### Footnote
-It's possible to generate the API key going to the [OpenWeather Sign up](https://openweathermap.org/appid) page.
-
-
-### Design doc
-
+### The application
+ The application depends on Spring Boot, Google Guava, as well as the Postgres connector.
 There are 3 profiles available:
  - dev: uses an in-memory database, aimed at initial development and testing
- - int: uses a mysql connector with a simple, environment-provided credential; paired with a docker helper setup, it can be used for full-environment activities, like benchmarking, checking out trickier behavior
- - prod: uses a mysqlconnector & spring cloud vault for secure credential handling.
+ - int: uses a postgres connector, for more involved development work.
+ - prod: uses a connector & spring cloud vault for secure credential handling.
+
+
+## Building & running 
+ A standard Spring Boot application, build with:
+```
+./mvnw package
+```
+
+And start with 
+```
+SECRET_APP_ID=<your app id> ./mvnw run
+```
+
+ For the int environment, follow instructions on [Dockerhub](https://hub.docker.com/_/postgres) to get started. The stack.yml is what the application-int.properties files is configured with.

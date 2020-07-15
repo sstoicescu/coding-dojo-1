@@ -1,7 +1,6 @@
 package com.assignment.spring.exceptions;
 
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 
 public class WeatherApiRequestException extends WeatherApiStatusException {
 

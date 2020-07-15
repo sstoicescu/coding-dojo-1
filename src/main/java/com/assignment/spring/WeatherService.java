@@ -7,17 +7,17 @@ import com.assignment.spring.api.WeatherResponse;
 
 @Service
 public class WeatherService {
-	
-    @Autowired
-    private WeatherRepository weatherRepository;
 
-    public WeatherEntity storeWeatherResponse(WeatherResponse response) {
-        WeatherEntity entity = new WeatherEntity();
-        entity.setCity(response.getName());
-        entity.setCountry(response.getSys().getCountry());
-        entity.setTemperature(response.getMain().getTemp());
+	@Autowired
+	private WeatherRepository weatherRepository;
 
-        return weatherRepository.save(entity);
-    }
+	public WeatherEntity storeWeatherResponse(WeatherResponse response) {
+		WeatherEntity entity = new WeatherEntity();
+		entity.setCity(response.getName());
+		entity.setCountry(response.getSys().getCountry());
+		entity.setTemperature(response.getMain().getTemp());
+
+		return weatherRepository.save(entity);
+	}
 
 }

@@ -16,15 +16,17 @@ public class StartupConfigurationTester {
 	
 	@Autowired
 	private WeatherApiService weatherApiService;
-	
+
 	@EventListener
 	public void checkWeatherApiIsAvailable(ApplicationStartedEvent event) {
 		log.info("Testing OpenWeather API configuration");
-		try {
-			weatherApiService.getWeatherForCity("Amsterdam");
-		} catch (WeatherApiAuthorizationException e) {
-			log.error("Failed to properly configure weather api authorization. Application cannot function.");
-			throw e;
+		if (event.getApplicationContext().getEnvironment().getActiveProfiles()[0] == "prod") {
+			try {
+				weatherApiService.getWeatherForCity("Amsterdam");
+			} catch (WeatherApiAuthorizationException e) {
+				log.error("Failed to properly configure weather api authorization. Application cannot function.");
+				throw e;
+			}			
 		}
 	}
 

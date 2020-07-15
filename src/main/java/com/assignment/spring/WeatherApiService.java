@@ -1,6 +1,5 @@
 package com.assignment.spring;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -23,18 +22,33 @@ public class WeatherApiService {
 
 	private static final Logger log = LoggerFactory.getLogger(WeatherApiService.class);
 
-	@Value("${com.assignment.spring.app.id}")
+	@Value("${com.assignment.spring.app.id:}")
 	private String appId;
 
 	@Value("${com.assignment.spring.app.url}")
 	private String weatherApiUrl;
 
 	@Autowired
-	private RestTemplate restTemplate;
+	private RateLimitedRestTemplate rateLimitedRestTemplate;
+
+	public WeatherResponse getWeatherForCity(String city) {
+		log.debug("Looking up " + city);
+		return call(() -> {
+			// the /weather API is coupled to the weather response type
+			return rateLimitedRestTemplate.execute((RestTemplate restTemplate) -> {
+				return restTemplate.getForEntity(this.weatherApiUrl, WeatherResponse.class,
+						Map.of("appid", this.appId, "city", city));
+			});
+		});
+	}
 
 	private <T> T call(java.util.function.Supplier<ResponseEntity<T>> s) {
 		try {
 			ResponseEntity<T> response = s.get();
+			//
+			if (!response.getStatusCode().is2xxSuccessful()) {
+				throw new RestClientException("Unknown/unhandled response from OpenWeather API: ");
+			}
 			return response.getBody();
 		}
 		// this part right here, this is common to the communication structure itself
@@ -54,15 +68,6 @@ public class WeatherApiService {
 			log.error("Uncaught exception while calling OpenWeather API: " + e.getMessage());
 			throw e;
 		}
-	}
-
-	public WeatherResponse getWeatherForCity(String city) {
-		log.debug("Looking up " + city);
-		return call(() -> {
-			// the /weather API is coupled to the weather response type
-			return restTemplate.getForEntity(this.weatherApiUrl, WeatherResponse.class,
-					Map.of("appid", this.appId, "city", city));
-		});
 	}
 
 }
