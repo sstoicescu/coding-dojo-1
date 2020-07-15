@@ -15,7 +15,7 @@ This is a simple weather forwarder part of the coding dojo from https://github.c
 - The application verifies its OpenWeather configuration is correct before declaring itself as ready to receive requests.
 - There is a primitive rate limiter.
 
-## Discussion around production readyness
+## Discussion around production readiness
  The dojo doesn't specify all the information required for full production readiness; more specifically, the target usage and the environment in which the application would be deployed.
  If it's a public service, we should have some form of authentication/authorization.
  Rate limiting is an issue; not just configuration-wise (suppose we have a Developer account and an Enterprise one) but also in terms of distribution: running instances on multiple machines. A workaround is to configure the API endpoint to a rate-limiter proxy.
