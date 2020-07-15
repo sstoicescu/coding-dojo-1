@@ -27,7 +27,7 @@ This is a simple weather forwarder part of the coding dojo from https://github.c
 There are 3 profiles available:
  - dev: uses an in-memory database, aimed at initial development and testing
  - int: uses a postgres connector, for more involved development work.
- - prod: uses a connector & spring cloud vault for secure credential handling.
+ - prod: uses a connector, and requires db credentials passed in during startup 
 
 
 ## Building & running 
