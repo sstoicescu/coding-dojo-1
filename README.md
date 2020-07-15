@@ -20,3 +20,11 @@ Please send an email containing your solution with a link to a public repository
 
 ### Footnote
 It's possible to generate the API key going to the [OpenWeather Sign up](https://openweathermap.org/appid) page.
+
+
+### Design doc
+
+There are 3 profiles available:
+ - dev: uses an in-memory database, aimed at initial development and testing
+ - int: uses a mysql connector with a simple, environment-provided credential; paired with a docker helper setup, it can be used for full-environment activities, like benchmarking, checking out trickier behavior
+ - prod: uses a mysqlconnector & spring cloud vault for secure credential handling.

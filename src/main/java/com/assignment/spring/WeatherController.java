@@ -1,37 +1,70 @@
 package com.assignment.spring;
 
-import com.assignment.spring.api.WeatherResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 
-import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestClientException;
+
+import com.assignment.spring.exceptions.WeatherApiStatusException;
 
 @RestController
+@Validated
 public class WeatherController {
 
-    @Autowired
-    private RestTemplate restTemplate;
+	
+	private static final Logger log = LoggerFactory.getLogger(WeatherController.class);
+
 
     @Autowired
-    private WeatherRepository weatherRepository;
-
-    @RequestMapping("/weather")
-    public WeatherEntity weather(HttpServletRequest request) {
-        String city = request.getParameter("city");
-        String url = Constants.WEATHER_API_URL.replace("{city}", city).replace("{appid}", Constants.APP_ID);
-        ResponseEntity<WeatherResponse> response = restTemplate.getForEntity(url, WeatherResponse.class);
-        return mapper(response.getBody());
+    private WeatherService weatherService;
+    
+    @Autowired
+    private WeatherApiService weatherApiService;
+    
+    @RequestMapping(value = "/weather",
+    		produces=MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public WeatherEntity weather(@Valid @NotBlank(message = "City may not be blank") String city) {
+    	log.debug("Processing weather request for " + city);
+        return weatherService.storeWeatherResponse(weatherApiService.getWeatherForCity(city));
     }
 
-    private WeatherEntity mapper(WeatherResponse response) {
-        WeatherEntity entity = new WeatherEntity();
-        entity.setCity(response.getName());
-        entity.setCountry(response.getSys().getCountry());
-        entity.setTemperature(response.getMain().getTemp());
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<String> handleConstraintError(ConstraintViolationException e) {
+    	log.error(e.getMessage()); // TODO: link the error to the request, right?
+    	return new ResponseEntity<>("invalid input: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(WeatherApiStatusException.class)
+    public ResponseEntity<String> handleKnownApiError(WeatherApiStatusException e) {
+    	log.error(e.getWrapped().getMessage());
+    	return new ResponseEntity<>(e.getMessage(), e.getWrappedStatusCode());
+    }
+    
+    @ExceptionHandler(RestClientException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<String> handleUnknownApiError(RestClientException e) {
+    	log.error(e.getMessage()); // TODO: link the error to the request, right?
+    	return new ResponseEntity<>("Error while trying to contact OpenWeather API Service: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-        return weatherRepository.save(entity);
+    @ExceptionHandler(DataAccessException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ResponseEntity<String> handleDaoError(DataAccessException e) {
+    	log.error("DB layer error" + e.getMessage());
+    	return new ResponseEntity<>("Error while trying to store weather data: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
